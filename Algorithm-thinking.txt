@@ -1,0 +1,17 @@
+1.The shortest route (by considering the distance between two points)
+Using an undirected matrix to store path information, the matrix value represents the path length, and non adjacent nodes are represented by infinity.
+1. Set the sets U and T of two point vertices, where set U stores the vertices with the shortest path found, and set T stores the vertices with the shortest path not yet found.
+2. In the initial state, the set U only contains the source point and is set to V0.
+3. Then select the vertex u with the shortest path length to the source point V0 from set T and add it to set U.
+4. For each new vertex U added to the set U, the current shortest path value of the remaining vertices in the set T of the source point V0 must be modified. The new shortest path length value of each vertex in the set T is the smaller of the original current shortest path length value and the weighted path length from the source point through vertex U to that vertex.
+5. Return to 3 and repeat this process until all vertices in set T are added to set U.
+2. The quickest route (by considering the speed limit of roads)
+Using an undirected matrix to store path information, the matrix value represents the path length, and non adjacent nodes are represented by infinity.
+Use a matrix to store the maximum allowable driving speed for each path.
+Initialize, create a time matrix, calculate the travel time of each path based on the above two matrices, and then modify the matrix value of the new matrix to travel time as the shortest time matrix.
+The principle is consistent when using the aforementioned Dijkstra shortest path algorithm to find the shortest time path and minimizing the search by treating time as the path length.
+3. The shortest route that meets some constraints, e.g., must pass a given location or POI (point of interest)
+Floyd algorithm is a dynamic programming algorithm for solving the shortest path between any two points. The main idea of this algorithm is to gradually increase intermediate nodes and continuously update the shortest path length between any two points until the final shortest path length matrix between any two points is obtained. Modify the algorithm to achieve the shortest path algorithm passing through a specific point.
+1. Initialization: Create an n * n matrix dist to represent the shortest path length between any two points, assign the weight of each edge to the corresponding matrix element, or assign it to a larger number (such as INF) if it does not exist, and assign the diagonal element to 0.
+2. Triple loop: Calculate the shortest path between any two points through a triple loop, where i and j are the numbers of any two points, and k is the number of the intermediate point that passes through. When calculating the shortest path, if it must pass through point k, we can change the k in the triple loop from 1 to n to k equal to the specified point k.
+3. Output result: The final matrix dist is the shortest path length between any two points. For the shortest path length from the starting point i to the ending point j, simply determine whether dist [i] [j] is INF. If it is INF, it means that i and j are not connected, otherwise dist [i] [j] is the shortest path length
