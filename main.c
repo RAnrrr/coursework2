@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -96,3 +97,258 @@ void Create_Edge(char *filename) {
     fclose(fp);
 }
 
+//对节点进行重新编码，对边的两个节点更新编码
+void reshape_Node_Edge() {
+    for (int i = 0; i < Node_NUM; i++) {
+        int id = nodes[i].id;
+        nodes[i].id = i;
+        for (int j = 0; j < Edge_NUM; j++) {
+            if (edges[j].node1 == id) {
+                edges[j].node1 = i;
+            }
+            if (edges[j].node2 == id) {
+                edges[j].node2 = i;
+            }
+        }
+    }
+//    for (int i = 0; i < Node_NUM; i++) {
+//        printf("%d %lf %lf\n",nodes[i].id, nodes[i].lat, nodes[i].lon);
+//    }
+//    printf("\n\n\n");
+//    for (int i = 0; i < Edge_NUM; i++) {
+//        printf("%d %d %lf\n", edges[i].node1, edges[i].node2, edges[i].length);
+//    }
+}
+
+//创建无向网
+void Create_Undirected_Network() {
+    for (int i = 0; i < NUM; i++) {
+        for (int j = 0; j < NUM; j++) {
+            Graph[i][j] = INF;
+        }
+    }
+    for (int i = 0; i < Edge_NUM; i++) {
+        int node1 = edges[i].node1;
+        int node2 = edges[i].node2;
+        Graph[node1][node2] = edges[i].length;
+        Graph[node2][node1] = edges[i].length;
+    }
+    int num = 0;
+    for (int i = 0; i < Node_NUM; i++) {
+        for (int j = 0; j < Node_NUM; j++) {
+            if (Graph[i][j] != INF) {
+                num++;
+            }
+
+//            printf("%lf ,",Graph[i][j]);
+        }
+//        printf("\n");
+    }
+//    printf("num=%d",num);
+
+}
+
+//Dijkstra求最短路径
+void Dijkstra() {
+    int s[Node_NUM];
+    double dist[Node_NUM];
+    int path[Node_NUM];
+    for (int i = 0; i < Node_NUM; i++) {
+        dist[i] = Graph[V][i];
+        s[i] = 0;
+        if (dist[i] == INF)
+            path[i] = -1;
+        else
+            path[i] = V;
+    }
+    s[V] = 1;
+    int minv = -1;
+    double minquan = INF;
+    for (int i = 1; i < Node_NUM; i++) {
+        for (int j = 0; j < Node_NUM; j++) {
+            if (!s[j] && dist[j] < minquan) {
+                minv = j;
+                minquan = dist[j];
+            }
+        }
+        s[minv] = 1;
+        for (int j = 0; j < Node_NUM; j++) {
+            if (Graph[minv][j] != INF && s[j] == 0 && dist[j] > minquan + Graph[minv][j]) {
+                dist[j] = minquan + Graph[minv][j];
+                path[j] = minv;
+            }
+        }
+        minquan = 1000;
+    }
+    if (dist[S] == INF) {
+        printf("最短路径不存在，存在孤立的点或者图没有连接无法到达\n");
+        return;
+    }
+    int p = S;
+    int count = 0;
+    int result[Node_NUM];
+    while (p != V) {
+        result[count] = p;
+        p = path[p];
+        count++;
+    }
+    result[count] = V;
+    printf("最短路径：");
+    for (int i = count; i >= 0; i--) {
+        if (i != 0)
+            printf("%d->", result[i]);
+        else
+            printf("%d", result[i]);
+    }
+    printf("\n");
+    printf("最短路径长度： %lf\n", dist[S]);
+}
+
+//创建时间权重无向图
+void Create_Time_Undirected_Network() {
+    for (int i = 0; i < NUM; i++) {
+        for (int j = 0; j < NUM; j++) {
+            Time_Graph[i][j] = INF;
+        }
+    }
+    for (int i = 0; i < Edge_NUM; i++) {
+        int node1 = edges[i].node1;
+        int node2 = edges[i].node2;
+        Time_Graph[node1][node2] = edges[i].length;
+        Time_Graph[node2][node1] = edges[i].length;
+    }
+    double speed = 60;
+    double limit_Speed = 30;
+    for (int i = 0; i < Node_NUM; i++) {
+        for (int j = 0; j < Node_NUM; j++) {
+            if (Time_Graph[i][j] == INF || Time_Graph[i][j] == 0)
+                continue;
+            Time_Graph[i][j] = Time_Graph[i][j] / speed;
+        }
+    }
+    int flag = 1;
+    int node1, node2;
+    char flags;
+    while (flag) {
+        printf("节点范围(0-%d) 输入道路限速节点node1和node2：", Node_NUM);
+        fflush(stdout);  // 刷新缓冲区
+        scanf("%d %d", &node1, &node2);
+        if (Time_Graph[node1][node2] == INF || Time_Graph[node1][node2] == 0) {
+            printf("当前道路不存在\n");
+        } else {
+            Time_Graph[node1][node2] /= limit_Speed;
+            Time_Graph[node2][node1] /= limit_Speed;
+            printf("道路%d到%d限速成功！！\n", node1, node2);
+            fflush(stdout);  // 刷新缓冲区
+        }
+        printf("是否再次输入(y/n)：");
+        fflush(stdout);  // 刷新缓冲区
+        getchar();
+        scanf("%c", &flags);
+        if (flags == 'y')
+            continue;
+        else if (flags == 'n')
+            flag = 0;
+    }
+}
+
+//Time_Dijkstra求最快路径
+void Time_Dijkstra() {
+    int s[Node_NUM];
+    double dist[Node_NUM];
+    int path[Node_NUM];
+    for (int i = 0; i < Node_NUM; i++) {
+        dist[i] = Time_Graph[V][i];
+        s[i] = 0;
+        if (dist[i] == INF)
+            path[i] = -1;
+        else
+            path[i] = V;
+    }
+    s[V] = 1;
+    int minv = -1;
+    double minquan = INF;
+    for (int i = 1; i < Node_NUM; i++) {
+        for (int j = 0; j < Node_NUM; j++) {
+            if (!s[j] && dist[j] < minquan) {
+                minv = j;
+                minquan = dist[j];
+            }
+        }
+        s[minv] = 1;
+        for (int j = 0; j < Node_NUM; j++) {
+            if (Time_Graph[minv][j] != INF && s[j] == 0 && dist[j] > minquan + Time_Graph[minv][j]) {
+                dist[j] = minquan + Time_Graph[minv][j];
+                path[j] = minv;
+            }
+        }
+        minquan = 1000;
+    }
+    if (dist[S] == INF) {
+        printf("最快路径不存在，存在孤立的点或者图没有连接无法到达\n");
+        return;
+    }
+    int p = S;
+    int count = 0;
+    int result[Node_NUM];
+    while (p != V) {
+        result[count] = p;
+        p = path[p];
+        count++;
+    }
+    result[count] = V;
+    printf("最快路径：");
+    for (int i = count; i >= 0; i--) {
+        if (i != 0)
+            printf("%d->", result[i]);
+        else
+            printf("%d", result[i]);
+    }
+}
+
+//经过一个特定点的Dijkstra算法求最短路径
+void POI_Dijkstra(){
+
+}
+
+
+
+//功能菜单
+int menu(){
+    int choice;
+    printf("功能列表\n");
+    printf("1:最短路径\n");
+    printf("2:最快路径\n");
+    printf("3:关键点路径\n");
+    printf("输入功能选择:");
+    fflush(stdout);  // 刷新缓冲区
+    scanf("%d",&choice);
+    return choice;
+}
+
+
+int main() {
+    char *filename = "C:\\Users\\wuxiaodi\\CLionProjects\\map\\leeds.txt";
+    Create_Edge(filename);
+    Create_Node(filename);
+//    for (int i = 0; i < Node_NUM; i++) {
+////        printf("%d %lf %lf\n", nodes[i].id, nodes[i].lat, nodes[i].lon);
+//    }
+//    printf("节点数:%d",Node_NUM);
+//    printf("\n\n\n");
+//    for (int i = 0; i < Edge_NUM; i++) {
+////        printf("%d %d %lf\n", edges[i].node1, edges[i].node2, edges[i].length);
+//    }
+//    printf("边数:%d",Edge_NUM);
+
+
+    //对节点进行重新编码，对边的两个节点更新编码
+    reshape_Node_Edge();
+    menu();
+//    Create_Undirected_Network();
+//    Dijkstra();
+    Create_Time_Undirected_Network();
+    Time_Dijkstra();
+
+    return 0;
+}
